@@ -84,13 +84,13 @@ export default function CustomerPortal() {
 
   if (loading) {
     return (
-      <AuthGuard allowedRoles={["CUSTOMER"]}>
+      
         <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
           <p className="text-slate-400">
             Loading customer portal...
           </p>
         </main>
-      </AuthGuard>
+    
     );
 
   }
