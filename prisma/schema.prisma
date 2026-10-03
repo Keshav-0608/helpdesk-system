@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model agents {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  org_id        String        @db.Uuid
+  name          String
+  email         String
+  role          String        @default("AGENT")
+  created_at    DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime      @default(now()) @db.Timestamptz(6)
+  organizations organizations @relation(fields: [org_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tickets       tickets[]
+
+  @@unique([org_id, email], map: "agents_org_email_unique")
+  @@index([org_id], map: "idx_agents_org")
+}
+
+model customers {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  org_id        String        @db.Uuid
+  name          String
+  email         String
+  created_at    DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime      @default(now()) @db.Timestamptz(6)
+  organizations organizations @relation(fields: [org_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  ratings       ratings[]
+  tickets       tickets[]
+
+  @@unique([org_id, email], map: "customers_org_email_unique")
+  @@index([org_id], map: "idx_customers_org")
+}
+
+model messages {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  org_id        String        @db.Uuid
+  ticket_id     String        @db.Uuid
+  sender_id     String        @db.Uuid
+  sender_type   sender_type
+  body          String
+  type          message_type  @default(PUBLIC)
+  created_at    DateTime      @default(now()) @db.Timestamptz(6)
+  organizations organizations @relation(fields: [org_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tickets       tickets       @relation(fields: [ticket_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([org_id], map: "idx_messages_org")
+  @@index([ticket_id, created_at], map: "idx_messages_ticket")
+}
+
+model organizations {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  created_at DateTime    @default(now()) @db.Timestamptz(6)
+  agents     agents[]
+  customers  customers[]
+  messages   messages[]
+  ratings    ratings[]
+  tickets    tickets[]
+
+  @@index([created_at], map: "idx_organizations_created_at")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ratings {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  org_id        String        @db.Uuid
+  ticket_id     String        @unique(map: "one_rating_per_ticket") @db.Uuid
+  customer_id   String        @db.Uuid
+  rating        Int
+  comment       String?
+  created_at    DateTime      @default(now()) @db.Timestamptz(6)
+  customers     customers     @relation(fields: [customer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  organizations organizations @relation(fields: [org_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tickets       tickets       @relation(fields: [ticket_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([customer_id], map: "idx_ratings_customer")
+  @@index([org_id], map: "idx_ratings_org")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tickets {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  org_id        String          @db.Uuid
+  customer_id   String          @db.Uuid
+  agent_id      String?         @db.Uuid
+  subject       String
+  description   String
+  priority      ticket_priority @default(NORMAL)
+  status        ticket_status   @default(OPEN)
+  sla_due_at    DateTime        @db.Timestamptz(6)
+  sla_breached  Boolean         @default(false)
+  created_at    DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime        @default(now()) @db.Timestamptz(6)
+  resolved_at   DateTime?       @db.Timestamptz(6)
+  closed_at     DateTime?       @db.Timestamptz(6)
+  messages      messages[]
+  ratings       ratings?
+  agents        agents?         @relation(fields: [agent_id], references: [id], onUpdate: NoAction)
+  customers     customers       @relation(fields: [customer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  organizations organizations   @relation(fields: [org_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([org_id, agent_id], map: "idx_tickets_agent")
+  @@index([org_id, customer_id], map: "idx_tickets_customer")
+  @@index([org_id], map: "idx_tickets_org")
+  @@index([org_id, priority], map: "idx_tickets_org_priority")
+  @@index([org_id, status], map: "idx_tickets_org_status")
+  @@index([org_id, sla_due_at], map: "idx_tickets_sla")
+  @@index([org_id, status, sla_due_at], map: "idx_tickets_unresolved")
+}
+
+enum message_type {
+  PUBLIC
+  INTERNAL
+}
+
+enum sender_type {
+  CUSTOMER
+  AGENT
+}
+
+enum ticket_priority {
+  URGENT
+  HIGH
+  NORMAL
+}
+
+enum ticket_status {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
