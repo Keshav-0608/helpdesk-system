@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import AuthGuard from "../components/AuthGuard";
+
 
 type Ticket = {
   id: string;
