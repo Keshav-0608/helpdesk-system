@@ -1,6 +1,5 @@
 "use client";
 
-import AuthGuard from "./components/AuthGuard";
 import { useEffect, useState } from "react";
 
 type DashboardData = {
@@ -60,14 +59,14 @@ export default function Home() {
 
   if (loading) {
     return (
-      <AuthGuard allowedRoles={["ADMIN"]}>
+      
       <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
         <div className="text-center">
           <div className="text-2xl font-semibold">Support Helpdesk</div>
           <p className="mt-2 text-slate-400">Loading dashboard...</p>
         </div>
       </main>
-      </AuthGuard>
+      
     );
   }
 
