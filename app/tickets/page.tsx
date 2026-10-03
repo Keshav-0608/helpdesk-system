@@ -1,6 +1,6 @@
 "use client";
 
-import AuthGuard from "../components/AuthGuard";
+
 import { useEffect, useState } from "react";
 
 type Ticket = {
@@ -284,7 +284,7 @@ function getAgentName(agentId: string | null) {
 });
 
   return (
-      <AuthGuard allowedRoles={["AGENT", "ADMIN"]}>
+      
     <main className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
       <header className="border-b border-white/10 bg-slate-900/80">
@@ -626,7 +626,7 @@ function getAgentName(agentId: string | null) {
         )}
       </div>
     </main>
-    </AuthGuard>
+    
   );
 }
 
